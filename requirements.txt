@@ -1,0 +1,5 @@
+adao
+numpy
+matplotlib
+scipy
+salib

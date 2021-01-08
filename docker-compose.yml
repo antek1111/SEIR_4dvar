@@ -1,0 +1,11 @@
+version: "3.2"
+services:
+  jupyter:
+    image: isz/seir_4dvar:latest
+    container_name: seir_4dvar
+    volumes:
+      - type: "bind"
+        source: .
+        target: /usr/local/lib/seir_4dvar/
+    ports:
+      - 8888:8888
