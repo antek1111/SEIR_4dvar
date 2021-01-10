@@ -2,10 +2,13 @@ import numpy as np
 from adao import adaoBuilder
 
 
-def assimilate(xb, yobs, observation_operator, evolution_func, verbose=False):
+def assimilate(xb, yobs, observation_operator, evolution_func, error_vector=None, verbose=False):
     case = adaoBuilder.New('')
     case.setBackground(Vector=xb, Stored=True)
-    case.setBackgroundError(ScalarSparseMatrix=1.e4)
+    if error_vector:
+        case.setBackgroundError(DiagonalSparseMatrix=error_vector)
+    else:
+        case.setBackgroundError(ScalarSparseMatrix=1.e4)
     case.setEvolutionError(ScalarSparseMatrix=0.1)
     case.setEvolutionModel(OneFunction=evolution_func)
     case.setObservation(VectorSerie=yobs, Stored=True)
