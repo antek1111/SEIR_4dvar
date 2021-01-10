@@ -2,10 +2,10 @@ import numpy as np
 from adao import adaoBuilder
 
 
-def assimilate(xb, yobs, observation_operator, evolution_func, error_vector, verbose=False):
+def assimilate(xb, yobs, observation_operator, evolution_func, verbose=False):
     case = adaoBuilder.New('')
     case.setBackground(Vector=xb, Stored=True)
-    case.setBackgroundError(DiagonalSparseMatrix=error_vector)
+    case.setBackgroundError(ScalarSparseMatrix=1.e4)
     case.setEvolutionError(ScalarSparseMatrix=0.1)
     case.setEvolutionModel(OneFunction=evolution_func)
     case.setObservation(VectorSerie=yobs, Stored=True)
@@ -15,17 +15,20 @@ def assimilate(xb, yobs, observation_operator, evolution_func, error_vector, ver
         Algorithm='4DVAR',
         Parameters={
             'StoreSupplementaryCalculations': [
-                'Analysis', 'BMA', 'CostFunctionJ', 'CostFunctionJAtCurrentOptimum',
-                'CostFunctionJb', 'CostFunctionJbAtCurrentOptimum', 'CostFunctionJo',
-                'CostFunctionJoAtCurrentOptimum', 'CurrentOptimum', 'CurrentState', 'IndexOfOptimum'
+                # 'Analysis', 'BMA', 'CostFunctionJ', 'CostFunctionJAtCurrentOptimum',
+                # 'CostFunctionJb', 'CostFunctionJbAtCurrentOptimum', 'CostFunctionJo',
+                # 'CostFunctionJoAtCurrentOptimum', 'CurrentOptimum', 'CurrentState', 'IndexOfOptimum'
+                'CurrentState'
             ],
+            'MaximumNumberOfSteps': 100
         },
     )
     if verbose:
         calculations = [
-            'Analysis', 'BMA', 'CostFunctionJ', 'CostFunctionJAtCurrentOptimum', 'CostFunctionJb',
-            'CostFunctionJbAtCurrentOptimum', 'CostFunctionJo', 'CostFunctionJoAtCurrentOptimum',
-            'CurrentOptimum', 'CurrentState', 'IndexOfOptimum'
+            # 'Analysis', 'BMA', 'CostFunctionJ', 'CostFunctionJAtCurrentOptimum', 'CostFunctionJb',
+            # 'CostFunctionJbAtCurrentOptimum', 'CostFunctionJo', 'CostFunctionJoAtCurrentOptimum',
+            # 'CurrentOptimum', 'CurrentState', 'IndexOfOptimum'
+            'CurrentState'
         ]
         for calculation in calculations:
             case.setObserver(
@@ -34,13 +37,13 @@ def assimilate(xb, yobs, observation_operator, evolution_func, error_vector, ver
                 Variable=calculation,
             )
     case.execute()
-    print("Calibration of %i coefficients in a 1D quadratic function on %i measures" % (
+    print("Calibration of %i coefficients on %i measures" % (
         len(case.get('Background')),
         len(case.get('Observation')),
         ))
     print("---------------------------------------------------------------------")
     print("Calibration resulting coefficients.:", np.ravel(case.get('Analysis')[-1]))
-    return case
+    return np.ravel(case.get('Analysis')[-1])
 
 
 def prepare_obs(state, obs_operator, evolution_function, size=100):
@@ -50,7 +53,8 @@ def prepare_obs(state, obs_operator, evolution_function, size=100):
         state = evolution_function(state)
     return a
 
-def load_data(size = 100, country = 'POL'):
+
+def load_data(size=100, country='POL'):
     deaths = []
     cumulative = 0
     with open('covid-deaths.csv') as f:
